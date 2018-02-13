@@ -1,3 +1,9 @@
+[Get-CWCisOnline](#get-cwcisonline)
+    
+[Get-CWCLastContact](#get-cwclastcontact)
+    
+[Invoke-CWCCommand](#invoke-cwccommand)
+    
 # Get-CWCisOnline
 ## SYNOPSIS
 Returns boolean for weather the machine has contacted within the hast $Seconds
