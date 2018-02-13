@@ -255,3 +255,5 @@ Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -C
 ```
 Will restart the Automate agent on the target machine.
 
+
+
