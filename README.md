@@ -1,3 +1,7 @@
+```
+irm 'bit.ly/controlposh' | iex
+```
+
 [Get-CWCisOnline](#get-cwcisonline)
     
 [Get-CWCLastContact](#get-cwclastcontact)
