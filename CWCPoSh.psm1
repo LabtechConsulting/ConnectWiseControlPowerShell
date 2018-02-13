@@ -37,6 +37,12 @@ function Get-CWCLastContact {
   .PARAMETER Password
     Password to authenticate against the control server
 
+  .PARAMETER Quite
+    Will output a boolean result $True for Connected $False for Offline
+
+  .PARAMETER Seconds
+    Used with Quite switch. The number of secconds a machine needs to be offline before returning $False
+
   .OUTPUTS
       [datetime]
 
@@ -59,7 +65,9 @@ function Get-CWCLastContact {
         [Parameter(Mandatory=$true)]
         $User,
         [Parameter(Mandatory=$true)]
-        $Password
+        $Password,
+        [switch]$Quiet,
+        [int]$Seconds
     )
 
     # Time conversion
@@ -96,83 +104,33 @@ function Get-CWCLastContact {
         $LatestEvent = ($GuestSessionEvents |  Where-Object{$_.EventType -in (10,11)} | Sort-Object time)[0]
         if($LatestEvent.EventType -eq 10){
             # Currently connected
-            Get-Date
+            if ($Quiet) {
+                $True
+            } else {
+                Get-Date
+            }
+            
         }
         else {
             # Time conversion hell :(
-            $OfflineTime = $epoch - ($LatestEvent.Time /1000)
-            $origin.AddSeconds($OfflineTime)
+            $TimeDiff = $epoch - ($LatestEvent.Time /1000)
+            $OfflineTime = $origin.AddSeconds($TimeDiff)
+            $Difference = New-TimeSpan –Start $OfflineTime –End $(Get-Date)
+            if ($Quiet -and $Difference.Seconds -lt $Seconds) {
+                $True
+                $Difference.Seconds
+                
+            } elseif ($Quiet -and $Difference.Seconds -gt $Seconds) {
+                $False
+                $Difference.Seconds
+            } else {
+                $OfflineTime
+            }
         }
     }
     else {
         Write-Warning "Unable to determin last contact."
         exit 1
-    }
-}
-
-function Get-CWCisOnline {
-<#
-  .SYNOPSIS
-    Returns boolean for weather the machine has contacted within the hast $Seconds
-
-  .PARAMETER Server
-    The address to your Control server example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
-
-  .PARAMETER GUID
-    The GUID identifier for the machine you wish to connect to.
-    Cant find documentation on how to find guid but is in url and service
-
-  .PARAMETER User
-    User to authenticate against the control server
-
-  .PARAMETER Password
-    Password to authenticate against the control server
-
-  .PARAMETER Seconds
-    The ammout of time that can have passed for it to be considered online.
-    Default value is 120 seconds.
-
-  .OUTPUTS
-    System.Bool
-
-  .NOTES
-      Version:        1.0
-      Author:         Chris Taylor
-      Creation Date:  1/20/2016
-      Purpose/Change: Initial script development
-
-  .EXAMPLE
-      Get-CWCisOnline -Server $Server -GUID $GUID -User $User -Password $Password
-        Will return a true or false value of weather the machine has checked in within the default time (2 minutes)
-#>
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true)]
-        $Server,
-        [Parameter(Mandatory=$true)]
-        $GUID,
-        [Parameter(Mandatory=$true)]
-        $User,
-        [Parameter(Mandatory=$true)]
-        $Password,
-        $Seconds = 120
-    )
-
-    try {
-        $LastTime = Get-CWCLastContact -Server $Server -GUID $GUID -User $User -Password $Password
-    }
-    catch {
-        Write-Warning "ERROR: $($_.Exception.Message)"
-        exit 1
-    }
-
-    # Inverse the seconds
-    $Seconds = $Seconds * -1
-    if ($LastTime -gt (Get-Date).AddSeconds($Seconds)) {
-        return $true
-    }
-    else {
-        return $false
     }
 }
 
