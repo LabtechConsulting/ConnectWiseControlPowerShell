@@ -62,7 +62,6 @@ Accept wildcard characters?  false
  
 ### -Seconds &lt;Object&gt;
 The ammout of time that can have passed for it to be considered online.
-Default value is 120 seconds.
 ```
 Required?                    false
 Position?                    5
@@ -87,7 +86,7 @@ Purpose/Change: Initial script development
 ```powershell
 Get-CWCisOnline -Server $Server -GUID $GUID -User $User -Password $Password
 ```
-Will return a true or false value of weather the machine has checked in within the default time (2 minutes)
+Will return a true or false value of weather the machine has checked in within the default time.
 
 # Get-CWCLastContact
 ## SYNOPSIS
@@ -222,7 +221,7 @@ Accept wildcard characters?  false
 ```
  
 ### -TimeOut &lt;Object&gt;
-The amount of time in milliseconds that a command can execute the default is 10 seconds.
+The amount of time in milliseconds that a command can execute before it is killed.
 ```
 Required?                    false
 Position?                    6
@@ -251,9 +250,6 @@ Will return the hostname of the machine
  
 ### EXAMPLE 2
 ```powershell
-Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -Command 'powershell "iwr https://bit.ly/ltposh | iex; Restart-LTService"'
+Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -TimeOut 120000 -Command 'powershell "iwr https://bit.ly/ltposh | iex; Restart-LTService"'
 ```
 Will restart the Automate agent on the target machine.
-
-
-
