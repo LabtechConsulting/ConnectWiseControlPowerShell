@@ -117,12 +117,9 @@ function Get-CWCLastContact {
             $OfflineTime = $origin.AddSeconds($TimeDiff)
             $Difference = New-TimeSpan –Start $OfflineTime –End $(Get-Date)
             if ($Quiet -and $Difference.Seconds -lt $Seconds) {
-                $True
-                $Difference.Seconds
-                
+                $True                
             } elseif ($Quiet -and $Difference.Seconds -gt $Seconds) {
                 $False
-                $Difference.Seconds
             } else {
                 $OfflineTime
             }
