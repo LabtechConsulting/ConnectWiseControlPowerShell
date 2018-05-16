@@ -93,7 +93,7 @@ Purpose/Change: Initial script development
 ```powershell
 Get-CWCLastContact -Server $Server -GUID $GUID -User $User -Password $Password
 ```
-Will return the last contact of the machine with that GUID
+Will return the last contact of the machine with that GUID.
 
 # Invoke-CWCCommand
 ## SYNOPSIS
@@ -183,7 +183,7 @@ Purpose/Change: Initial script development
 ```powershell
 Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -Command 'hostname'
 ```
-Will return the hostname of the machine
+Will return the hostname of the machine.
  
 ### EXAMPLE 2
 ```powershell

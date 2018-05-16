@@ -54,7 +54,7 @@ function Get-CWCLastContact {
 
   .EXAMPLE
       Get-CWCLastContact -Server $Server -GUID $GUID -User $User -Password $Password
-        Will return the last contact of the machine with that GUID
+        Will return the last contact of the machine with that GUID.
 #>
     [CmdletBinding()]
     param(
@@ -137,7 +137,7 @@ function Invoke-CWCCommand {
     Will issue a command against a given machine and return the results.
 
   .PARAMETER Server
-    The address to your Control server example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+    The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 
   .PARAMETER GUID
     The GUID identifier for the machine you wish to connect to.
@@ -166,7 +166,7 @@ function Invoke-CWCCommand {
 
   .EXAMPLE
       Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -Command 'hostname'
-        Will return the hostname of the machine
+        Will return the hostname of the machine.
 
   .EXAMPLE
       Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -TimeOut 120000 -Command 'powershell "iwr https://bit.ly/ltposh | iex; Restart-LTService"'
