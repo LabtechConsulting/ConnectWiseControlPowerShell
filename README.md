@@ -18,7 +18,7 @@ Get-CWCLastContact [-Server] <Object> [-GUID] <Object> [-User] <Object> [-Passwo
 ## PARAMETERS
 
 ### -Server &lt;Object&gt;
-The address to your Control server example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 ```
 Required?                    true
 Position?                    1
@@ -29,7 +29,7 @@ Accept wildcard characters?  false
  
 ### -GUID &lt;Object&gt;
 The GUID identifier for the machine you wish to connect to.
-Cant find documentation on how to find guid but is in url and service
+No documentation on how to find the GUID but it is in the URL and service.
 ```
 Required?                    true
 Position?                    2
@@ -39,7 +39,7 @@ Accept wildcard characters?  false
 ```
  
 ### -User &lt;Object&gt;
-User to authenticate against the control server
+User to authenticate against the Control server.
 ```
 Required?                    true
 Position?                    3
@@ -49,7 +49,7 @@ Accept wildcard characters?  false
 ```
  
 ### -Password &lt;Object&gt;
-Password to authenticate against the control server
+Password to authenticate against the Control server.
 ```
 Required?                    true
 Position?                    4
@@ -58,7 +58,7 @@ Accept pipeline input?       false
 Accept wildcard characters?  false
 ```
 ### -Quiet &lt;Object&gt;
-Will output a boolean result $True for Connected $False for Offline
+Will output a boolean result, $True for Connected or $False for Offline.
 ```
 Required?                    false
 Position?                    5
@@ -68,7 +68,7 @@ Accept wildcard characters?  false
 ```
 
 ### -Seconds &lt;Object&gt;
-Used with Quite switch. The number of secconds a machine needs to be offline before returning $False
+Used with Quiet switch. The number of seconds a machine needs to be offline before returning $False.
 ```
 Required?                    false
 Position?                    6
@@ -107,7 +107,7 @@ Invoke-CWCCommand [-Server] <Object> [-GUID] <Object> [-User] <Object> [-Passwor
 ## PARAMETERS
 
 ### -Server &lt;Object&gt;
-The address to your Control server example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 ```
 Required?                    true
 Position?                    1
@@ -118,7 +118,7 @@ Accept wildcard characters?  false
  
 ### -GUID &lt;Object&gt;
 The GUID identifier for the machine you wish to connect to.
-Cant find documentation on how to find guid but is in url and service
+No documentation on how to find the GUID but it is in the URL and service.
 ```
 Required?                    true
 Position?                    2
@@ -128,7 +128,7 @@ Accept wildcard characters?  false
 ```
  
 ### -User &lt;Object&gt;
-User to authenticate against the control server
+User to authenticate against the Control server.
 ```
 Required?                    true
 Position?                    3
@@ -138,7 +138,7 @@ Accept wildcard characters?  false
 ```
  
 ### -Password &lt;Object&gt;
-Password to authenticate against the control server
+Password to authenticate against the Control server.
 ```
 Required?                    true
 Position?                    4
