@@ -29,7 +29,7 @@ function Get-CWCLastContact {
 
   .PARAMETER GUID
     The GUID identifier for the machine you wish to connect to.
-    No ddocumentation on how to find the GUID but it is in the URL and service.
+    No documentation on how to find the GUID but it is in the URL and service.
 
   .PARAMETER User
     User to authenticate against the Control server.
