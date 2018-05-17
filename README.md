@@ -1,5 +1,5 @@
 ```
-irm 'bit.ly/controlposh' | iex
+irm 'https://bit.ly/controlposh' | iex
 ```
 
 [Get-CWCLastContact](#get-cwclastcontact)
