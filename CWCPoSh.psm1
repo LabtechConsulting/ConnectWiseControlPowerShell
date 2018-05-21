@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    A powershell wrapper for the ConnectWise Control API
+    A PowerShell wrapper for the ConnectWise Control API
 
 .DESCRIPTION
-    This module will allow you to interact with the Control API allowing you to retreive data and issue commands.
+    This module will allow you to interact with the Control API to issue commands and retrieve data.
 
 .NOTES
     Version:        1.0
@@ -25,23 +25,23 @@ function Get-CWCLastContact {
     Returns the date the machine last connected to the server.
 
   .PARAMETER Server
-    The address to your Control server example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+    The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 
   .PARAMETER GUID
     The GUID identifier for the machine you wish to connect to.
-    Cant find documentation on how to find guid but is in url and service
+    No documentation on how to find the GUID but it is in the URL and service.
 
   .PARAMETER User
-    User to authenticate against the control server
+    User to authenticate against the Control server.
 
   .PARAMETER Password
-    Password to authenticate against the control server
+    Password to authenticate against the Control server.
 
-  .PARAMETER Quite
-    Will output a boolean result $True for Connected $False for Offline
+  .PARAMETER Quiet
+    Will output a boolean result, $True for Connected or $False for Offline.
 
   .PARAMETER Seconds
-    Used with Quite switch. The number of secconds a machine needs to be offline before returning $False
+    Used with the Quiet switch. The number of seconds a machine needs to be offline before returning $False.
 
   .OUTPUTS
       [datetime]
@@ -54,17 +54,17 @@ function Get-CWCLastContact {
 
   .EXAMPLE
       Get-CWCLastContact -Server $Server -GUID $GUID -User $User -Password $Password
-        Will return the last contact of the machine with that GUID
+        Will return the last contact of the machine with that GUID.
 #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$True)]
         $Server,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$True)]
         $GUID,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$True)]
         $User,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$True)]
         $Password,
         [switch]$Quiet,
         [int]$Seconds
@@ -85,7 +85,7 @@ function Get-CWCLastContact {
         $SessionDetails = Invoke-RestMethod -Uri $url -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning "There was was an error connecting to the server."
+        Write-Warning "There was an error connecting to the server."
         Write-Warning "ERROR: $($_.Exception.Message)"
         exit 1
     }
@@ -95,21 +95,21 @@ function Get-CWCLastContact {
         exit 1
     }
 
-    # Filter to guest session events
-    $GuestSessionEvents = ($SessionDetails.Connections | Where-Object{$_.ProcessType -eq 2}).Events
+    # Filter to only guest session events
+    $GuestSessionEvents = ($SessionDetails.Connections | Where-Object {$_.ProcessType -eq 2}).Events
 
     if ($GuestSessionEvents) {
 
         # Get connection events
-        $LatestEvent = ($GuestSessionEvents |  Where-Object{$_.EventType -in (10,11)} | Sort-Object time)[0]
-        if($LatestEvent.EventType -eq 10){
+        $LatestEvent = ($GuestSessionEvents | Where-Object {$_.EventType -in (10,11)} | Sort-Object time)[0]
+        if ($LatestEvent.EventType -eq 10) {
             # Currently connected
             if ($Quiet) {
                 $True
             } else {
                 Get-Date
             }
-            
+
         }
         else {
             # Time conversion hell :(
@@ -117,7 +117,7 @@ function Get-CWCLastContact {
             $OfflineTime = $origin.AddSeconds($TimeDiff)
             $Difference = New-TimeSpan –Start $OfflineTime –End $(Get-Date)
             if ($Quiet -and $Difference.Seconds -lt $Seconds) {
-                $True                
+                $True
             } elseif ($Quiet -and $Difference.Seconds -gt $Seconds) {
                 $False
             } else {
@@ -126,7 +126,7 @@ function Get-CWCLastContact {
         }
     }
     else {
-        Write-Warning "Unable to determin last contact."
+        Write-Warning "Unable to determine last contact."
         exit 1
     }
 }
@@ -137,23 +137,23 @@ function Invoke-CWCCommand {
     Will issue a command against a given machine and return the results.
 
   .PARAMETER Server
-    The address to your Control server example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+    The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 
   .PARAMETER GUID
     The GUID identifier for the machine you wish to connect to.
-    Cant find documentation on how to find guid but is in url and service
+    No documentation on how to find the GUID but it is in the URL and service.
 
   .PARAMETER User
-    User to authenticate against the control server
+    User to authenticate against the Control server.
 
   .PARAMETER Password
-    Password to authenticate against the control server
+    Password to authenticate against the Control server.
 
   .PARAMETER Command
     The command you wish to issue to the machine.
 
   .PARAMETER TimeOut
-    The amount of time in milliseconds that a command can execute the default is 10 seconds.
+    The amount of time in milliseconds that a command can execute. The default is 10000 milliseconds.
 
   .OUTPUTS
       The output of the Command provided.
@@ -166,21 +166,21 @@ function Invoke-CWCCommand {
 
   .EXAMPLE
       Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -Command 'hostname'
-        Will return the hostname of the machine
+        Will return the hostname of the machine.
 
   .EXAMPLE
-      Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -Command 'powershell "iwr https://bit.ly/ltposh | iex; Restart-LTService"'
+      Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -TimeOut 120000 -Command 'powershell "iwr https://bit.ly/ltposh | iex; Restart-LTService"'
         Will restart the Automate agent on the target machine.
 #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$True)]
         $Server,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$True)]
         $GUID,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$True)]
         $User,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$True)]
         $Password,
         $Command,
         $TimeOut = 10000
@@ -223,7 +223,7 @@ $Command
         $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning "There was a problem validating command was issued."
+        Write-Warning "There was a problem validating the command was issued."
         Write-Warning "ERROR: $($_.Exception.Message)"
     }
 
@@ -233,39 +233,39 @@ $Command
     $ExecuteDate = $origin.AddSeconds($ExecuteTime)
 
     # Look for results of command
-    $Looking = $true
+    $Looking = $True
     $TimeOut = (Get-Date).AddMilliseconds($TimeOut)
     $Body = @"
 ["All Machines","$GUID"]
 "@
-    while($Looking){
+    while ($Looking) {
         try {
             $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
         }
         catch {
-            Write-Warning "There was a problem validating command was issued."
+            Write-Warning "There was a problem validating the command was issued."
             Write-Warning "ERROR: $($_.Exception.Message)"
         }
 
         $ConnectionsWithData = @()
-        Foreach($Connection in $SessionDetails.connections){
+        Foreach ($Connection in $SessionDetails.connections) {
             $ConnectionsWithData += $Connection | Where-Object {$_.Events.EventType -eq 70}
         }
 
         $Events = ($ConnectionsWithData.events | Where-Object {$_.EventType -eq 70 -and $_.Time})
-        foreach($Event in $Events) {
+        foreach ($Event in $Events) {
             $epoch = $((New-TimeSpan -Start $(Get-Date -Date "01/01/1970") -End $(Get-Date)).TotalSeconds)
             $CheckTime = $epoch - ($Event.Time /1000)
             $CheckDate = $origin.AddSeconds($CheckTime)
-            if($CheckDate -gt $ExecuteDate){
-                $Looking = $false
+            if ($CheckDate -gt $ExecuteDate) {
+                $Looking = $False
                 $Event.Data -split '[\r\n]' | Where-Object {$_} | Select-Object -skip 1
             }
         }
 
         Start-Sleep -Seconds 1
-        if($(Get-Date) -gt $TimeOut.AddSeconds(1)){
-            $Looking = $false
+        if ($(Get-Date) -gt $TimeOut.AddSeconds(1)) {
+            $Looking = $False
         }
     }
 }
