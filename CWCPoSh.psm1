@@ -115,7 +115,7 @@ function Get-CWCLastContact {
             # Time conversion hell :(
             $TimeDiff = $epoch - ($LatestEvent.Time /1000)
             $OfflineTime = $origin.AddSeconds($TimeDiff)
-            $Difference = New-TimeSpan –Start $OfflineTime –End $(Get-Date)
+            $Difference = New-TimeSpan -Start $OfflineTime -End $(Get-Date)
             if ($Quiet -and $Difference.Seconds -lt $Seconds) {
                 $True
             } elseif ($Quiet -and $Difference.Seconds -gt $Seconds) {
