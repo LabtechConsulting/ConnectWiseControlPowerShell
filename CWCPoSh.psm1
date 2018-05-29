@@ -28,8 +28,27 @@ function Get-CWCLastContact {
     The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 
   .PARAMETER GUID
-    The GUID identifier for the machine you wish to connect to.
-    No documentation on how to find the GUID but it is in the URL and service.
+    The GUID/SessionID for the machine you wish to connect to.
+    Please see section below from documentation, SessionID s=xxx
+    
+    Client Launch Parameters:
+    For every session launched, there is an object which contains a set of information used to initialize it. This information is referred to as the Client Launch Parameters. These parameters are passed back to the server when the session is created so they need to be URL-encoded.
+
+    On Windows clients, the launch parameters are located in the registry at: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ScreenConnect Client (xxxxxxxxxxxxxxxx)\ImagePath
+    On Linux and Mac clients, it's found in the ClientLaunchParameters.txt file in the client installation folder:
+    /opt/screenconnect-xxxxxxxxxxxxxxxx/ClientLaunchParameters.txt
+
+    A brief overview of the launch information for an access session follows:
+    Name    Variable    Description    Example (if applicable)
+    SessionType    e    The type of session (Support, Meet, or Access)    e=Access
+    ProcessType    y    The session's participant type (Guest or Host)    y=Guest
+    Host    h    The URI used to reach the server's relay service    h=live.screenconnect.com
+    Port    p    The port on which the relay service operates    p=8041
+    SessionID    s    The GUID used to identify the client to the server    s=0030556d-f0ba-4a19-94d1-a6df242a4a41
+    EncryptionKey    k    The encryption key used to verify the server's identity    k=
+    SessionName    i    The name of the session as it appears on the Host page    i=DC_Server01
+    CustomProperties    c    The value of any pre-defined custom properties    c=Server&c=CompanyB&c=&c=&c=&c=&c=&c=
+    NameCallbackFormat    t    The value the client tells the server is the name of the session    t=
 
   .PARAMETER User
     User to authenticate against the Control server.
