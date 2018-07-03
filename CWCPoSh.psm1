@@ -106,12 +106,12 @@ function Get-CWCLastContact {
     catch {
         Write-Warning "There was an error connecting to the server."
         Write-Warning "ERROR: $($_.Exception.Message)"
-        exit 1
+        return
     }
 
     if ($SessionDetails -eq 'null' -or !$SessionDetails) {
         Write-Warning "Machine not found."
-        exit 1
+        return
     }
 
     # Filter to only guest session events
@@ -146,7 +146,7 @@ function Get-CWCLastContact {
     }
     else {
         Write-Warning "Unable to determine last contact."
-        exit 1
+        return
     }
 }
 
@@ -229,7 +229,7 @@ $Command
     catch {
         Write-Warning "There was a problem issuing the command."
         Write-Warning "ERROR: $(($_.ErrorDetails | ConvertFrom-Json).message)"
-        exit 1
+        return
     }
 
     # Get Session
