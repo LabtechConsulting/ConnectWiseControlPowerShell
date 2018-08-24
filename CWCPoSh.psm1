@@ -66,10 +66,13 @@ function Get-CWCLastContact {
       [datetime]
 
   .NOTES
-      Version:        1.0
+      Version:        1.1
       Author:         Chris Taylor
       Creation Date:  1/20/2016
       Purpose/Change: Initial script development
+
+      Update Date:  8/24/2018
+      Purpose/Change: Fix Timespan Seconds duration
 
   .EXAMPLE
       Get-CWCLastContact -Server $Server -GUID $GUID -User $User -Password $Password
@@ -135,9 +138,9 @@ function Get-CWCLastContact {
             $TimeDiff = $epoch - ($LatestEvent.Time /1000)
             $OfflineTime = $origin.AddSeconds($TimeDiff)
             $Difference = New-TimeSpan -Start $OfflineTime -End $(Get-Date)
-            if ($Quiet -and $Difference.Seconds -lt $Seconds) {
+            if ($Quiet -and $Difference.TotalSeconds -lt $Seconds) {
                 $True
-            } elseif ($Quiet -and $Difference.Seconds -gt $Seconds) {
+            } elseif ($Quiet) {
                 $False
             } else {
                 $OfflineTime
