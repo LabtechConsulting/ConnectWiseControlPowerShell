@@ -166,6 +166,18 @@ Default value                10000
 Accept pipeline input?       false
 Accept wildcard characters?  false
 ```
+
+### -Powershell &lt;Object&gt;
+Issues the command in a powershell session.
+```
+Required?                    false
+Position?                    named
+Default value                False
+Accept pipeline input?       false
+Accept wildcard characters?  false
+```
+
+
 ## INPUTS
 
 ## OUTPUTS
