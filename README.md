@@ -100,7 +100,7 @@ Will return the last contact of the machine with that GUID.
 Will issue a command against a given machine and return the results.
 ## SYNTAX
 ```powershell
-Invoke-CWCCommand [-Server] <Object> [-GUID] <Object> [-User] <Object> [-Password] <Object> [[-Command] <Object>] [[-TimeOut] <Object>] [<CommonParameters>]
+Invoke-CWCCommand [-Server] <Object> [-GUID] <Object> [-User] <Object> [-Password] <Object> [[-Command] <Object>] [[-TimeOut] <Object>] [-PowerShell] [<CommonParameters>]
 ```
 ## DESCRIPTION
 
