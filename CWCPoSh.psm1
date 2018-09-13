@@ -177,6 +177,9 @@ function Invoke-CWCCommand {
   .PARAMETER TimeOut
     The amount of time in milliseconds that a command can execute. The default is 10000 milliseconds.
 
+  .PARAMETER PowerShell
+    Issues the command in a powershell session.
+
   .OUTPUTS
       The output of the Command provided.
 
@@ -205,7 +208,8 @@ function Invoke-CWCCommand {
         [Parameter(Mandatory=$True)]
         $Password,
         $Command,
-        $TimeOut = 10000
+        $TimeOut = 10000,
+        [switch]$PowerShell
     )
 
     $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
@@ -217,6 +221,12 @@ function Invoke-CWCCommand {
     # Encode the command and create body
     $Command = $Command -replace '(?<!\\)(?:\\)(?!\\)','\\'
     $Command = $Command -replace '"(?<!\\")','\"'
+    if ($Powershell) {
+        $Command = @"
+#!ps
+$Command
+"@
+    }
     $Command = @"
 #timeout=$TimeOut
 $Command
