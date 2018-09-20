@@ -194,7 +194,7 @@ function Invoke-CWCCommand {
         Will return the hostname of the machine.
 
   .EXAMPLE
-      Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -TimeOut 120000 -Command 'powershell "iwr https://bit.ly/ltposh | iex; Restart-LTService"'
+      Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -TimeOut 120000 -Command 'iwr "https://bit.ly/ltposh" | iex; Restart-LTService' -PowerShell
         Will restart the Automate agent on the target machine.
 #>
     [CmdletBinding()]
