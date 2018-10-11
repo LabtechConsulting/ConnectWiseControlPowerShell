@@ -20,64 +20,53 @@
 #region-[Functions]------------------------------------------------------------
 
 function Get-CWCLastContact {
-<#
-  .SYNOPSIS
-    Returns the date the machine last connected to the server.
+    <#
+      .SYNOPSIS
+        Returns the date the machine last connected to the control server.
 
-  .PARAMETER Server
-    The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+      .DESCRIPTION
+        Returns the date the machine last connected to the control server.
 
-  .PARAMETER GUID
-    The GUID/SessionID for the machine you wish to connect to.
-    Please see section below from documentation, SessionID s=xxx
-    
-    Client Launch Parameters:
-    For every session launched, there is an object which contains a set of information used to initialize it. This information is referred to as the Client Launch Parameters. These parameters are passed back to the server when the session is created so they need to be URL-encoded.
+      .PARAMETER Server
+        The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 
-    On Windows clients, the launch parameters are located in the registry at: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ScreenConnect Client (xxxxxxxxxxxxxxxx)\ImagePath
-    On Linux and Mac clients, it's found in the ClientLaunchParameters.txt file in the client installation folder:
-    /opt/screenconnect-xxxxxxxxxxxxxxxx/ClientLaunchParameters.txt
+      .PARAMETER GUID
+        The GUID/SessionID for the machine you wish to connect to.
+        You can retreive session info with the 'Get-CWCSessions' commandlet
 
-    A brief overview of the launch information for an access session follows:
-    Name    Variable    Description    Example (if applicable)
-    SessionType    e    The type of session (Support, Meet, or Access)    e=Access
-    ProcessType    y    The session's participant type (Guest or Host)    y=Guest
-    Host    h    The URI used to reach the server's relay service    h=live.screenconnect.com
-    Port    p    The port on which the relay service operates    p=8041
-    SessionID    s    The GUID used to identify the client to the server    s=0030556d-f0ba-4a19-94d1-a6df242a4a41
-    EncryptionKey    k    The encryption key used to verify the server's identity    k=
-    SessionName    i    The name of the session as it appears on the Host page    i=DC_Server01
-    CustomProperties    c    The value of any pre-defined custom properties    c=Server&c=CompanyB&c=&c=&c=&c=&c=&c=
-    NameCallbackFormat    t    The value the client tells the server is the name of the session    t=
+        On Windows clients, the launch parameters are located in the registry at:
+          HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ScreenConnect Client (xxxxxxxxxxxxxxxx)\ImagePath
+        On Linux and Mac clients, it's found in the ClientLaunchParameters.txt file in the client installation folder:
+          /opt/screenconnect-xxxxxxxxxxxxxxxx/ClientLaunchParameters.txt
 
-  .PARAMETER User
-    User to authenticate against the Control server.
+      .PARAMETER User
+        User to authenticate against the Control server.
 
-  .PARAMETER Password
-    Password to authenticate against the Control server.
+      .PARAMETER Password
+        Password to authenticate against the Control server.
 
-  .PARAMETER Quiet
-    Will output a boolean result, $True for Connected or $False for Offline.
+      .PARAMETER Quiet
+        Will output a boolean result, $True for Connected or $False for Offline.
 
-  .PARAMETER Seconds
-    Used with the Quiet switch. The number of seconds a machine needs to be offline before returning $False.
+      .PARAMETER Seconds
+        Used with the Quiet switch. The number of seconds a machine needs to be offline before returning $False.
 
-  .OUTPUTS
-      [datetime]
+      .OUTPUTS
+          [datetime]
 
-  .NOTES
-      Version:        1.1
-      Author:         Chris Taylor
-      Creation Date:  1/20/2016
-      Purpose/Change: Initial script development
+      .NOTES
+          Version:        1.1
+          Author:         Chris Taylor
+          Creation Date:  1/20/2016
+          Purpose/Change: Initial script development
 
-      Update Date:  8/24/2018
-      Purpose/Change: Fix Timespan Seconds duration
+          Update Date:  8/24/2018
+          Purpose/Change: Fix Timespan Seconds duration
 
-  .EXAMPLE
-      Get-CWCLastContact -Server $Server -GUID $GUID -User $User -Password $Password
-        Will return the last contact of the machine with that GUID.
-#>
+      .EXAMPLE
+          Get-CWCLastContact -Server $Server -GUID $GUID -User $User -Password $Password
+            Will return the last contact of the machine with that GUID.
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$True)]
@@ -107,8 +96,7 @@ function Get-CWCLastContact {
         $SessionDetails = Invoke-RestMethod -Uri $url -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning "There was an error connecting to the server."
-        Write-Warning "ERROR: $($_.Exception.Message)"
+        Write-Warning "$($_.Exception.Message)"
         return
     }
 
@@ -158,12 +146,15 @@ function Invoke-CWCCommand {
   .SYNOPSIS
     Will issue a command against a given machine and return the results.
 
+  .DESCRIPTION
+    Will issue a command against a given machine and return the results.
+
   .PARAMETER Server
     The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 
   .PARAMETER GUID
     The GUID identifier for the machine you wish to connect to.
-    No documentation on how to find the GUID but it is in the URL and service.
+    You can retreive session info with the 'Get-CWCSessions' commandlet
 
   .PARAMETER User
     User to authenticate against the Control server.
@@ -240,8 +231,7 @@ $Command
         $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning "There was a problem issuing the command."
-        Write-Warning "ERROR: $(($_.ErrorDetails | ConvertFrom-Json).message)"
+        Write-Warning "$(($_.ErrorDetails | ConvertFrom-Json).message)"
         return
     }
 
@@ -255,8 +245,7 @@ $Command
         $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning "There was a problem validating the command was issued."
-        Write-Warning "ERROR: $($_.Exception.Message)"
+        Write-Warning $($_.Exception.Message)
     }
 
     #Get time command was executed
@@ -275,8 +264,7 @@ $Command
             $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
         }
         catch {
-            Write-Warning "There was a problem validating the command was issued."
-            Write-Warning "ERROR: $($_.Exception.Message)"
+            Write-Warning $($_.Exception.Message)
         }
 
         $ConnectionsWithData = @()
@@ -299,6 +287,175 @@ $Command
         if ($(Get-Date) -gt $TimeOut.AddSeconds(1)) {
             $Looking = $False
         }
+    }
+}
+
+function Get-CWCSessions {
+<#
+    .SYNOPSIS
+        Will return a list of sessions.
+
+    .DESCRIPTION
+        Allows you to search for access or service sessions.
+
+    .PARAMETER Server
+        The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+
+    .PARAMETER User
+        User to authenticate against the Control server.
+
+    .PARAMETER Password
+        Password to authenticate against the Control server.
+
+    .PARAMETER Type
+        The type of session Support/Access
+
+    .PARAMETER Group
+        Name of session group to use.
+
+    .PARAMETER Search
+        Limit results with search patern.
+
+    .PARAMETER Limit
+        Limit the number of results returned.
+
+    .OUTPUTS
+        ConnectWise Control session objects
+
+    .NOTES
+        Version:        1.0
+        Author:         Chris Taylor
+        Creation Date:  10/10/2018
+        Purpose/Change: Initial script development
+
+    .EXAMPLE
+        Get-CWCAccessSessions -Server $Server -User $User -Password $Password -Search "server1" -Limit 10
+        Will return the first 10 access sessions that match 'server1'.
+
+#>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$True)]
+        $Server,
+        [Parameter(Mandatory=$True)]
+        $User,
+        [Parameter(Mandatory=$True)]
+        $Password,
+        [Parameter(Mandatory=$True)]
+        [ValidateSet('Support','Access')] 
+        $Type,
+        $Group,
+        $Search,
+        $Limit
+    )
+
+    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+
+    $URI = "$Server/Services/PageService.ashx/GetHostSessionInfo"
+
+    if ($Type -eq 'Support') {
+        $Number = 0
+    }
+    elseif ($Type -eq 'Access') {
+        $Number = 2
+    }
+    else {
+        Write-Warning "Unknown Type, $Type"
+        return
+    }
+
+    if ($Limit) {
+        $Limit = ", $Limit"
+    }
+
+    $Body = "[$Number, [`"$Group`"], `"$Search`" ,null$Limit]"
+
+    try {
+        $Data = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+        return $Data.sessions
+    }
+    catch {
+        Write-Warning $(($_.ErrorDetails | ConvertFrom-Json).message)
+        return
+    }
+}
+
+function End-CWCSession {
+<#
+  .SYNOPSIS
+      Will end a given session.
+  
+  .DESCRIPTION
+      Will end a given access or support session.
+  
+  .PARAMETER Server
+      The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+  
+  .PARAMETER User
+      User to authenticate against the Control server.
+  
+  .PARAMETER Password
+      Password to authenticate against the Control server.
+  
+  .PARAMETER Type
+      The type of session Support/Access
+  
+  .PARAMETER GUID
+      The GUID identifier for the session you wish to end.
+
+  .NOTES
+      Version:        1.0
+      Author:         Chris Taylor
+      Creation Date:  10/10/2018
+      Purpose/Change: Initial script development
+
+  .EXAMPLE
+      End-CWCAccessSession -Server $Server -GUID $GUID -User $User -Password $Password
+        Will remove the given access session
+#>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$True)]
+        $Server,
+        [Parameter(Mandatory=$True)]
+        $GUID,
+        [Parameter(Mandatory=$True)]
+        $User,
+        [Parameter(Mandatory=$True)]
+        $Password,
+        [Parameter(Mandatory=$True)]
+        [ValidateSet('Support','Access')] 
+        $Type
+    )
+
+    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+
+    $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
+
+    if ($Type -eq 'Support') {
+        $Group = 'All Sessions'
+    }
+    elseif ($Type -eq 'Access') {
+        $Group = 'All Machines'
+    }
+    else {
+        Write-Warning "Unknown Type, $Type"
+        return
+    }
+
+    $Body = @"
+["$Group",["$GUID"],21,""]
+"@
+
+    # Issue command
+    try {
+        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+    }
+    catch {
+        Write-Warning $(($_.ErrorDetails | ConvertFrom-Json).message)
+        return
     }
 }
 
