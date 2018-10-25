@@ -459,7 +459,7 @@ function End-CWCSession {
     }
 }
 
-function Update-CWCSessoionName {
+function Update-CWCSessionName {
     <#
       .SYNOPSIS
         Updates the name of a session.
@@ -495,7 +495,7 @@ function Update-CWCSessoionName {
           Purpose/Change: Initial script development
 
       .EXAMPLE
-          Update-CWCSessoionName -Server $Server -GUID $GUID -User $User -Password $Password -NewName 'Session1'
+          Update-CWCSessionName -Server $Server -GUID $GUID -User $User -Password $Password -NewName 'Session1'
             Will rename the session to Session1
     #>
     [CmdletBinding()]
