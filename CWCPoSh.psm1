@@ -459,4 +459,72 @@ function End-CWCSession {
     }
 }
 
+function Update-CWCSessoionName {
+    <#
+      .SYNOPSIS
+        Updates the name of a session.
+
+      .DESCRIPTION
+         Updates the name of a session on the control server.
+
+      .PARAMETER Server
+        The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+
+      .PARAMETER GUID
+        The GUID/SessionID for the machine you wish to connect to.
+        You can retreive session info with the 'Get-CWCSessions' commandlet
+
+        On Windows clients, the launch parameters are located in the registry at:
+          HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ScreenConnect Client (xxxxxxxxxxxxxxxx)\ImagePath
+        On Linux and Mac clients, it's found in the ClientLaunchParameters.txt file in the client installation folder:
+          /opt/screenconnect-xxxxxxxxxxxxxxxx/ClientLaunchParameters.txt
+
+      .PARAMETER User
+        User to authenticate against the Control server.
+
+      .PARAMETER Password
+        Password to authenticate against the Control server.
+
+      .PARAMETER NewName
+        The new name for the session.
+
+      .NOTES
+          Version:        1.1
+          Author:         Chris Taylor
+          Creation Date:  10/25/2018
+          Purpose/Change: Initial script development
+
+      .EXAMPLE
+          Update-CWCSessoionName -Server $Server -GUID $GUID -User $User -Password $Password -NewName 'Session1'
+            Will rename the session to Session1
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$True)]
+        $Server,
+        [Parameter(Mandatory=$True)]
+        $GUID,
+        [Parameter(Mandatory=$True)]
+        $User,
+        [Parameter(Mandatory=$True)]
+        $Password,
+        [string]$NewName
+    )
+
+    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+
+    $Body = @"
+    ["All Sessions","$GUID","$NewName"]
+"@
+    $URl = "$Server/Services/PageService.ashx/UpdateSessionName"
+    try {
+        $SessionDetails = Invoke-RestMethod -Uri $url -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+    }
+    catch {
+        Write-Warning "$($_.Exception.Message)"
+        return
+    }
+
+}
 #endregion Functions
