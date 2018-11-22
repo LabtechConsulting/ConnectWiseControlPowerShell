@@ -102,7 +102,7 @@ function Get-CWCLastContact {
 
     if ($SessionDetails -eq 'null' -or !$SessionDetails) {
         Write-Warning "Machine not found."
-        return
+        return $null
     }
 
     # Filter to only guest session events
