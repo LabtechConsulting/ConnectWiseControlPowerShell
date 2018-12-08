@@ -72,7 +72,7 @@ function Get-CWCLastContact {
         [Parameter(Mandatory=$True)]
         $Server,
         [Parameter(Mandatory=$True)]
-        $GUID,
+        [guid]$GUID,
         [Parameter(Mandatory=$True)]
         $User,
         [Parameter(Mandatory=$True)]
@@ -88,9 +88,10 @@ function Get-CWCLastContact {
     $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
     $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
 
-    $Body = @"
-    ["All Machines","$GUID"]
-"@
+    $Group = "All Machines"
+    $Body = ConvertTo-Json @($Group,$GUID)
+    Write-Verbose $Body
+
     $URl = "$Server/Services/PageService.ashx/GetSessionDetails"
     try {
         $SessionDetails = Invoke-RestMethod -Uri $url -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
@@ -193,7 +194,7 @@ function Invoke-CWCCommand {
         [Parameter(Mandatory=$True)]
         $Server,
         [Parameter(Mandatory=$True)]
-        $GUID,
+        [guid]$GUID,
         [Parameter(Mandatory=$True)]
         $User,
         [Parameter(Mandatory=$True)]
@@ -222,10 +223,10 @@ $Command
 #timeout=$TimeOut
 $Command
 "@
-    $Body = @"
-["All Machines",["$GUID"],44,"$Command"]
-"@
-
+    $Group = "All Machines"
+    $SessionEventType = 44
+    $Body = ConvertTo-Json @($Group,@($GUID),$SessionEventType,$Command)
+    Write-Verbose $Body
     # Issue command
     try {
         $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
@@ -236,11 +237,9 @@ $Command
     }
 
     # Get Session
-    $Body = @"
-    ["All Machines","$GUID"]
-"@
     $URI = "$Server/Services/PageService.ashx/GetSessionDetails"
-
+    $Body = ConvertTo-Json @($Group,$GUID)
+    Write-Verbose $Body
     try {
         $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
@@ -256,9 +255,7 @@ $Command
     # Look for results of command
     $Looking = $True
     $TimeOut = (Get-Date).AddMilliseconds($TimeOut)
-    $Body = @"
-["All Machines","$GUID"]
-"@
+    $Body = ConvertTo-Json @($Group,$GUID)
     while ($Looking) {
         try {
             $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
@@ -419,7 +416,7 @@ function End-CWCSession {
         [Parameter(Mandatory=$True)]
         $Server,
         [Parameter(Mandatory=$True)]
-        $GUID,
+        [guid[]]$GUID,
         [Parameter(Mandatory=$True)]
         $User,
         [Parameter(Mandatory=$True)]
@@ -444,10 +441,8 @@ function End-CWCSession {
         Write-Warning "Unknown Type, $Type"
         return
     }
-
-    $Body = @"
-["$Group",["$GUID"],21,""]
-"@
+    $SessionEventType = 21
+    $Body = ConvertTo-Json @($Group,$GUID,$SessionEventType,'')
 
     # Issue command
     try {
@@ -527,4 +522,82 @@ function Update-CWCSessionName {
     }
 
 }
+
+function Invoke-CWCWake {
+    <#
+      .SYNOPSIS
+          Will issue a wake command to a given session.
+      
+      .DESCRIPTION
+          Will issue a wake command to a given access or support session.
+      
+      .PARAMETER Server
+          The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+      
+      .PARAMETER User
+          User to authenticate against the Control server.
+      
+      .PARAMETER Password
+          Password to authenticate against the Control server.
+      
+      .PARAMETER Type
+          The type of session Support/Access
+      
+      .PARAMETER GUID
+          The GUID identifier for the session you wish to end.
+    
+      .NOTES
+          Version:        1.0
+          Author:         Chris Taylor
+          Creation Date:  12/7/2018
+          Purpose/Change: Initial script development
+    
+      .EXAMPLE
+          End-CWWake -Server $Server -GUID $GUID -User $User -Password $Password
+            Will issue a wake command to a given session.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$True)]
+        $Server,
+        [Parameter(Mandatory=$True)]
+        [guid[]]$GUID,
+        [Parameter(Mandatory=$True)]
+        $User,
+        [Parameter(Mandatory=$True)]
+        $Password,
+        [Parameter(Mandatory=$True)]
+        [ValidateSet('Support','Access')] 
+        $Type
+    )
+
+    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+
+    $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
+
+    if ($Type -eq 'Support') {
+        $Group = 'All Sessions'
+    }
+    elseif ($Type -eq 'Access') {
+        $Group = 'All Machines'
+    }
+    else {
+        Write-Warning "Unknown Type, $Type"
+        return
+    }
+
+    $SessionEventType = 42
+    $Body = ConvertTo-Json @($Group,$GUID,$SessionEventType,'')
+    
+    # Issue command
+    try {
+        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+    }
+    catch {
+        Write-Warning $(($_.ErrorDetails | ConvertFrom-Json).message)
+        return
+    }
+}
+    
 #endregion Functions
