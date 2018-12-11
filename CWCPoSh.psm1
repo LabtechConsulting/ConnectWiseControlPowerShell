@@ -210,9 +210,6 @@ function Invoke-CWCCommand {
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
-    # Encode the command and create body
-    $Command = $Command -replace '(?<!\\)(?:\\)(?!\\)','\\'
-    $Command = $Command -replace '"(?<!\\")','\"'
     if ($Powershell) {
         $Command = @"
 #!ps
