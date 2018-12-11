@@ -70,15 +70,16 @@ function Get-CWCLastContact {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$True)]
-        $Server,
+        [string]$Server,
         [Parameter(Mandatory=$True)]
         [guid]$GUID,
         [Parameter(Mandatory=$True)]
-        $User,
+        [string]$User,
         [Parameter(Mandatory=$True)]
-        $Password,
+        [string]$Password,
         [switch]$Quiet,
-        [int]$Seconds
+        [int]$Seconds,
+        [string]$Group = "All Machines"
     )
 
     # Time conversion
@@ -88,7 +89,6 @@ function Get-CWCLastContact {
     $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
     $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
 
-    $Group = "All Machines"
     $Body = ConvertTo-Json @($Group,$GUID)
     Write-Verbose $Body
 
@@ -97,12 +97,12 @@ function Get-CWCLastContact {
         $SessionDetails = Invoke-RestMethod -Uri $url -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning "$($_.Exception.Message)"
+        Write-Error "$($_.Exception.Message)"
         return
     }
 
     if ($SessionDetails -eq 'null' -or !$SessionDetails) {
-        Write-Warning "Machine not found."
+        Write-Error "Machine not found."
         return $null
     }
 
@@ -116,9 +116,9 @@ function Get-CWCLastContact {
         if ($LatestEvent.EventType -eq 10) {
             # Currently connected
             if ($Quiet) {
-                $True
+                return $True
             } else {
-                Get-Date
+                return Get-Date
             }
 
         }
@@ -128,80 +128,81 @@ function Get-CWCLastContact {
             $OfflineTime = $origin.AddSeconds($TimeDiff)
             $Difference = New-TimeSpan -Start $OfflineTime -End $(Get-Date)
             if ($Quiet -and $Difference.TotalSeconds -lt $Seconds) {
-                $True
+                return $True
             } elseif ($Quiet) {
-                $False
+                return $False
             } else {
-                $OfflineTime
+                return $OfflineTime
             }
         }
     }
     else {
-        Write-Warning "Unable to determine last contact."
+        Write-Error "Unable to determine last contact."
         return
     }
 }
 
 function Invoke-CWCCommand {
-<#
-  .SYNOPSIS
-    Will issue a command against a given machine and return the results.
+    <#
+    .SYNOPSIS
+        Will issue a command against a given machine and return the results.
 
-  .DESCRIPTION
-    Will issue a command against a given machine and return the results.
+    .DESCRIPTION
+        Will issue a command against a given machine and return the results.
 
-  .PARAMETER Server
-    The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+    .PARAMETER Server
+        The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 
-  .PARAMETER GUID
-    The GUID identifier for the machine you wish to connect to.
-    You can retreive session info with the 'Get-CWCSessions' commandlet
+    .PARAMETER GUID
+        The GUID identifier for the machine you wish to connect to.
+        You can retreive session info with the 'Get-CWCSessions' commandlet
 
-  .PARAMETER User
-    User to authenticate against the Control server.
+    .PARAMETER User
+        User to authenticate against the Control server.
 
-  .PARAMETER Password
-    Password to authenticate against the Control server.
+    .PARAMETER Password
+        Password to authenticate against the Control server.
 
-  .PARAMETER Command
-    The command you wish to issue to the machine.
+    .PARAMETER Command
+        The command you wish to issue to the machine.
 
-  .PARAMETER TimeOut
-    The amount of time in milliseconds that a command can execute. The default is 10000 milliseconds.
+    .PARAMETER TimeOut
+        The amount of time in milliseconds that a command can execute. The default is 10000 milliseconds.
 
-  .PARAMETER PowerShell
-    Issues the command in a powershell session.
+    .PARAMETER PowerShell
+        Issues the command in a powershell session.
 
-  .OUTPUTS
-      The output of the Command provided.
+    .OUTPUTS
+        The output of the Command provided.
 
-  .NOTES
-      Version:        1.0
-      Author:         Chris Taylor
-      Creation Date:  1/20/2016
-      Purpose/Change: Initial script development
+    .NOTES
+        Version:        1.0
+        Author:         Chris Taylor
+        Creation Date:  1/20/2016
+        Purpose/Change: Initial script development
 
-  .EXAMPLE
-      Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -Command 'hostname'
-        Will return the hostname of the machine.
+    .EXAMPLE
+        Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -Command 'hostname'
+            Will return the hostname of the machine.
 
-  .EXAMPLE
-      Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -TimeOut 120000 -Command 'iwr -UseBasicParsing "https://bit.ly/ltposh" | iex; Restart-LTService' -PowerShell
-        Will restart the Automate agent on the target machine.
-#>
+    .EXAMPLE
+        Invoke-CWCCommand -Server $Server -GUID $GUID -User $User -Password $Password -TimeOut 120000 -Command 'iwr -UseBasicParsing "https://bit.ly/ltposh" | iex; Restart-LTService' -PowerShell
+            Will restart the Automate agent on the target machine.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$True)]
-        $Server,
+        [string]$Server,
         [Parameter(Mandatory=$True)]
         [guid]$GUID,
         [Parameter(Mandatory=$True)]
-        $User,
+        [string]$User,
         [Parameter(Mandatory=$True)]
-        $Password,
-        $Command,
-        $TimeOut = 10000,
-        [switch]$PowerShell
+        [string]$Password,
+        [string]$Command,
+        [int]$TimeOut = 10000,
+        [switch]$PowerShell,
+        [string]$Group = "All Machines"
     )
 
     $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
@@ -210,26 +211,26 @@ function Invoke-CWCCommand {
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
+
+    # Format command
+    $FormattedCommand = @()
     if ($Powershell) {
-        $Command = @"
-#!ps
-$Command
-"@
+        $FormattedCommand += '#!ps'
     }
-    $Command = @"
-#timeout=$TimeOut
-$Command
-"@
-    $Group = "All Machines"
+    $FormattedCommand += "#timeout=$TimeOut"
+    $FormattedCommand += $Command
+    $FormattedCommand = $FormattedCommand | Out-String
+
     $SessionEventType = 44
-    $Body = ConvertTo-Json @($Group,@($GUID),$SessionEventType,$Command)
+    $Body = ConvertTo-Json @($Group,@($GUID),$SessionEventType,$FormattedCommand)
     Write-Verbose $Body
+    
     # Issue command
     try {
         $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning "$(($_.ErrorDetails | ConvertFrom-Json).message)"
+        Write-Error "$(($_.ErrorDetails | ConvertFrom-Json).message)"
         return
     }
 
@@ -241,7 +242,8 @@ $Command
         $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning $($_.Exception.Message)
+        Write-Error $($_.Exception.Message)
+        return
     }
 
     #Get time command was executed
@@ -251,14 +253,15 @@ $Command
 
     # Look for results of command
     $Looking = $True
-    $TimeOut = (Get-Date).AddMilliseconds($TimeOut)
+    $TimeOutDateTime = (Get-Date).AddMilliseconds($TimeOut)
     $Body = ConvertTo-Json @($Group,$GUID)
     while ($Looking) {
         try {
             $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
         }
         catch {
-            Write-Warning $($_.Exception.Message)
+            Write-Error $($_.Exception.Message)
+            return
         }
 
         $ConnectionsWithData = @()
@@ -273,19 +276,19 @@ $Command
             $CheckDate = $origin.AddSeconds($CheckTime)
             if ($CheckDate -gt $ExecuteDate) {
                 $Looking = $False
-                $Event.Data -split '[\r\n]' | Where-Object {$_} | Select-Object -skip 1
+                return $Event.Data -split '[\r\n]' | Where-Object {$_} | Select-Object -skip 1
             }
         }
 
         Start-Sleep -Seconds 1
-        if ($(Get-Date) -gt $TimeOut.AddSeconds(1)) {
+        if ($(Get-Date) -gt $TimeOutDateTime.AddSeconds(1)) {
             $Looking = $False
         }
     }
 }
 
 function Get-CWCSessions {
-<#
+    <#
     .SYNOPSIS
         Will return a list of sessions.
 
@@ -326,21 +329,21 @@ function Get-CWCSessions {
         Get-CWCAccessSessions -Server $Server -User $User -Password $Password -Search "server1" -Limit 10
         Will return the first 10 access sessions that match 'server1'.
 
-#>
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$True)]
-        $Server,
+        [string]$Server,
         [Parameter(Mandatory=$True)]
-        $User,
+        [string]$User,
         [Parameter(Mandatory=$True)]
-        $Password,
+        [string]$Password,
         [Parameter(Mandatory=$True)]
         [ValidateSet('Support','Access')] 
         $Type,
-        $Group,
-        $Search,
-        $Limit
+        [string]$Group = "All Machines",
+        [string]$Search,
+        [int]$Limit
     )
 
     $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
@@ -348,76 +351,68 @@ function Get-CWCSessions {
 
     $URI = "$Server/Services/PageService.ashx/GetHostSessionInfo"
 
-    if ($Type -eq 'Support') {
-        $Number = 0
-    }
-    elseif ($Type -eq 'Access') {
-        $Number = 2
-    }
-    else {
-        Write-Warning "Unknown Type, $Type"
-        return
+    switch($Type){
+        'Support'   {$Number = 0}
+        'Access'    {$Number = 2}
+        default     {Write-Error "Unknown Type, $Type";return} 
     }
 
-    if ($Limit) {
-        $Limit = ", $Limit"
-    }
-
-    $Body = "[$Number, [`"$Group`"], `"$Search`" ,null$Limit]"
+    $Body = ConvertTo-Json @($Number,@($Group),$Search,$null,$Limit)
+    Write-Verbose $Body
 
     try {
         $Data = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
         return $Data.sessions
     }
     catch {
-        Write-Warning $(($_.ErrorDetails | ConvertFrom-Json).message)
+        Write-Error $(($_.ErrorDetails | ConvertFrom-Json).message)
         return
     }
 }
 
 function End-CWCSession {
-<#
-  .SYNOPSIS
-      Will end a given session.
-  
-  .DESCRIPTION
-      Will end a given access or support session.
-  
-  .PARAMETER Server
-      The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
-  
-  .PARAMETER User
-      User to authenticate against the Control server.
-  
-  .PARAMETER Password
-      Password to authenticate against the Control server.
-  
-  .PARAMETER Type
-      The type of session Support/Access
-  
-  .PARAMETER GUID
-      The GUID identifier for the session you wish to end.
+    <#
+    .SYNOPSIS
+        Will end a given session.
+    
+    .DESCRIPTION
+        Will end a given access or support session.
+    
+    .PARAMETER Server
+        The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+    
+    .PARAMETER User
+        User to authenticate against the Control server.
+    
+    .PARAMETER Password
+        Password to authenticate against the Control server.
+    
+    .PARAMETER Type
+        The type of session Support/Access
+    
+    .PARAMETER GUID
+        The GUID identifier for the session you wish to end.
 
-  .NOTES
-      Version:        1.0
-      Author:         Chris Taylor
-      Creation Date:  10/10/2018
-      Purpose/Change: Initial script development
+    .NOTES
+        Version:        1.0
+        Author:         Chris Taylor
+        Creation Date:  10/10/2018
+        Purpose/Change: Initial script development
 
-  .EXAMPLE
-      End-CWCAccessSession -Server $Server -GUID $GUID -User $User -Password $Password
-        Will remove the given access session
-#>
+    .EXAMPLE
+        End-CWCAccessSession -Server $Server -GUID $GUID -User $User -Password $Password
+            Will remove the given access session
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$True)]
-        $Server,
+        [string]$Server,
         [Parameter(Mandatory=$True)]
         [guid[]]$GUID,
         [Parameter(Mandatory=$True)]
-        $User,
+        [string]$User,
         [Parameter(Mandatory=$True)]
-        $Password,
+        [string]$Password,
         [Parameter(Mandatory=$True)]
         [ValidateSet('Support','Access')] 
         $Type
@@ -428,96 +423,94 @@ function End-CWCSession {
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
 
-    if ($Type -eq 'Support') {
-        $Group = 'All Sessions'
+    switch($Type){
+        'Support'   {$Number = 0}
+        'Access'    {$Number = 2}
+        default     {Write-Error "Unknown Type, $Type";return} 
     }
-    elseif ($Type -eq 'Access') {
-        $Group = 'All Machines'
-    }
-    else {
-        Write-Warning "Unknown Type, $Type"
-        return
-    }
+
     $SessionEventType = 21
     $Body = ConvertTo-Json @($Group,$GUID,$SessionEventType,'')
+    Write-Verbose $Body
 
     # Issue command
     try {
         $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning $(($_.ErrorDetails | ConvertFrom-Json).message)
+        Write-Error $(($_.ErrorDetails | ConvertFrom-Json).message)
         return
     }
 }
 
 function Update-CWCSessionName {
     <#
-      .SYNOPSIS
-        Updates the name of a session.
+    .SYNOPSIS
+    Updates the name of a session.
 
-      .DESCRIPTION
-         Updates the name of a session on the control server.
+    .DESCRIPTION
+        Updates the name of a session on the control server.
 
-      .PARAMETER Server
-        The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+    .PARAMETER Server
+    The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 
-      .PARAMETER GUID
-        The GUID/SessionID for the machine you wish to connect to.
-        You can retreive session info with the 'Get-CWCSessions' commandlet
+    .PARAMETER GUID
+    The GUID/SessionID for the machine you wish to connect to.
+    You can retreive session info with the 'Get-CWCSessions' commandlet
 
-        On Windows clients, the launch parameters are located in the registry at:
-          HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ScreenConnect Client (xxxxxxxxxxxxxxxx)\ImagePath
-        On Linux and Mac clients, it's found in the ClientLaunchParameters.txt file in the client installation folder:
-          /opt/screenconnect-xxxxxxxxxxxxxxxx/ClientLaunchParameters.txt
+    On Windows clients, the launch parameters are located in the registry at:
+        HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ScreenConnect Client (xxxxxxxxxxxxxxxx)\ImagePath
+    On Linux and Mac clients, it's found in the ClientLaunchParameters.txt file in the client installation folder:
+        /opt/screenconnect-xxxxxxxxxxxxxxxx/ClientLaunchParameters.txt
 
-      .PARAMETER User
-        User to authenticate against the Control server.
+    .PARAMETER User
+    User to authenticate against the Control server.
 
-      .PARAMETER Password
-        Password to authenticate against the Control server.
+    .PARAMETER Password
+    Password to authenticate against the Control server.
 
-      .PARAMETER NewName
-        The new name for the session.
+    .PARAMETER NewName
+    The new name for the session.
 
-      .NOTES
-          Version:        1.1
-          Author:         Chris Taylor
-          Creation Date:  10/25/2018
-          Purpose/Change: Initial script development
+    .NOTES
+        Version:        1.1
+        Author:         Chris Taylor
+        Creation Date:  10/25/2018
+        Purpose/Change: Initial script development
 
-      .EXAMPLE
-          Update-CWCSessionName -Server $Server -GUID $GUID -User $User -Password $Password -NewName 'Session1'
-            Will rename the session to Session1
+    .EXAMPLE
+        Update-CWCSessionName -Server $Server -GUID $GUID -User $User -Password $Password -NewName 'Session1'
+        Will rename the session to Session1
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$True)]
-        $Server,
+        [string]$Server,
         [Parameter(Mandatory=$True)]
-        $GUID,
+        [guid]$GUID,
         [Parameter(Mandatory=$True)]
-        $User,
+        [string]$User,
         [Parameter(Mandatory=$True)]
-        $Password,
-        [string]$NewName
+        [string]$Password,
+        [Parameter(Mandatory=$True)]
+        [string]$NewName,
+        [string]$Group = "All Machines"
     )
 
     $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
     $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
 
-    $Body = @"
-    ["All Sessions","$GUID","$NewName"]
-"@
+    $Body = ConvertTo-Json @($Group,$GUID,$NewName)
+    Write-Verbose $Body
+
     $URl = "$Server/Services/PageService.ashx/UpdateSessionName"
     try {
-        $SessionDetails = Invoke-RestMethod -Uri $url -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+        $null = Invoke-RestMethod -Uri $url -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning "$($_.Exception.Message)"
+        Write-Error $_.Exception.Message
         return
     }
-
 }
 
 function Invoke-CWCWake {
@@ -541,7 +534,7 @@ function Invoke-CWCWake {
           The type of session Support/Access
       
       .PARAMETER GUID
-          The GUID identifier for the session you wish to end.
+          The GUID identifier for the session you wish to end. Accepts an array of GUIDs
     
       .NOTES
           Version:        1.0
@@ -556,13 +549,13 @@ function Invoke-CWCWake {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$True)]
-        $Server,
+        [string]$Server,
         [Parameter(Mandatory=$True)]
         [guid[]]$GUID,
         [Parameter(Mandatory=$True)]
-        $User,
+        [string]$User,
         [Parameter(Mandatory=$True)]
-        $Password,
+        [string]$Password,
         [Parameter(Mandatory=$True)]
         [ValidateSet('Support','Access')] 
         $Type
@@ -573,26 +566,22 @@ function Invoke-CWCWake {
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
 
-    if ($Type -eq 'Support') {
-        $Group = 'All Sessions'
-    }
-    elseif ($Type -eq 'Access') {
-        $Group = 'All Machines'
-    }
-    else {
-        Write-Warning "Unknown Type, $Type"
-        return
+    switch($Type){
+        'Support'   {$Group = 'All Sessions'}
+        'Access'    {$Group = 'All Machines'}
+        default     {Write-Error "Unknown Type, $Type";return}
     }
 
     $SessionEventType = 42
     $Body = ConvertTo-Json @($Group,$GUID,$SessionEventType,'')
+    Write-Verbose $Body
     
     # Issue command
     try {
         $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Warning $(($_.ErrorDetails | ConvertFrom-Json).message)
+        Write-Error $(($_.ErrorDetails | ConvertFrom-Json).message)
         return
     }
 }
