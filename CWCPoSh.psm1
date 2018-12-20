@@ -424,9 +424,9 @@ function Remove-CWCSession {
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
 
     switch($Type){
-        'Support'   {$Number = 0}
-        'Access'    {$Number = 2}
-        default     {Write-Error "Unknown Type, $Type";return} 
+        'Support'   {$Group = 'All Sessions'}
+        'Access'    {$Group = 'All Machines'}
+        default     {Write-Error "Unknown Type, $Type";return}
     }
 
     $SessionEventType = 21
