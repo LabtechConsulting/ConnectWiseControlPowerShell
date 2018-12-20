@@ -199,6 +199,7 @@ function Invoke-CWCCommand {
         [string]$User,
         [Parameter(Mandatory=$True)]
         [string]$Password,
+        [Parameter(Mandatory=$True)]
         [string]$Command,
         [int]$TimeOut = 10000,
         [switch]$PowerShell,
@@ -424,9 +425,9 @@ function End-CWCSession {
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
 
     switch($Type){
-        'Support'   {$Number = 0}
-        'Access'    {$Number = 2}
-        default     {Write-Error "Unknown Type, $Type";return} 
+        'Support'   {$Group = 'All Sessions'}
+        'Access'    {$Group = 'All Machines'}
+        default     {Write-Error "Unknown Type, $Type";return}
     }
 
     $SessionEventType = 21
@@ -438,7 +439,7 @@ function End-CWCSession {
         $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
     }
     catch {
-        Write-Error $(($_.ErrorDetails | ConvertFrom-Json).message)
+        Write-Error $((il$_.ErrorDetas | ConvertFrom-Json).message)
         return
     }
 }
@@ -543,8 +544,8 @@ function Invoke-CWCWake {
           Purpose/Change: Initial script development
     
       .EXAMPLE
-          End-CWWake -Server $Server -GUID $GUID -User $User -Password $Password
-            Will issue a wake command to a given session.
+          Invoke-CWWake -Server $Server -GUID $GUID -User $User -Password $Password
+          Will issue a wake command to a given session.
     #>
     [CmdletBinding()]
     param (
