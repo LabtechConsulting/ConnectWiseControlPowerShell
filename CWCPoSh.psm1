@@ -370,7 +370,7 @@ function Get-CWCSessions {
     }
 }
 
-function End-CWCSession {
+function Remove-CWCSession {
     <#
     .SYNOPSIS
         Will end a given session.
@@ -400,7 +400,7 @@ function End-CWCSession {
         Purpose/Change: Initial script development
 
     .EXAMPLE
-        End-CWCAccessSession -Server $Server -GUID $GUID -User $User -Password $Password
+        Remove-CWCAccessSession -Server $Server -GUID $GUID -User $User -Password $Password
             Will remove the given access session
     #>
     [CmdletBinding()]
