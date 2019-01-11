@@ -11,6 +11,9 @@
     Creation Date:  1/20/2016
     Purpose/Change: Initial script development
 
+    Update Date:  1/11/2019
+    Purpose/Change: Move to [PSCredential] authentication
+
 .LINK
     labtechconsulting.com
 #>
@@ -32,7 +35,7 @@ function Get-CWCLastContact {
 
       .PARAMETER GUID
         The GUID/SessionID for the machine you wish to connect to.
-        You can retreive session info with the 'Get-CWCSessions' commandlet
+        You can retrieve session info with the 'Get-CWCSessions' commandlet
 
         On Windows clients, the launch parameters are located in the registry at:
           HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ScreenConnect Client (xxxxxxxxxxxxxxxx)\ImagePath
@@ -166,7 +169,7 @@ function Invoke-CWCCommand {
 
     .PARAMETER GUID
         The GUID identifier for the machine you wish to connect to.
-        You can retreive session info with the 'Get-CWCSessions' commandlet
+        You can retrieve session info with the 'Get-CWCSessions' commandlet
 
     .PARAMETER Credentials
         [PSCredential] object used to authenticate against Control.
@@ -336,7 +339,7 @@ function Get-CWCSessions {
         Name of session group to use.
 
     .PARAMETER Search
-        Limit results with search patern.
+        Limit results with search pattern.
 
     .PARAMETER Limit
         Limit the number of results returned.
@@ -499,7 +502,7 @@ function Update-CWCSessionName {
 
     .PARAMETER GUID
     The GUID/SessionID for the machine you wish to connect to.
-    You can retreive session info with the 'Get-CWCSessions' commandlet
+    You can retrieve session info with the 'Get-CWCSessions' commandlet
 
     On Windows clients, the launch parameters are located in the registry at:
         HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ScreenConnect Client (xxxxxxxxxxxxxxxx)\ImagePath
