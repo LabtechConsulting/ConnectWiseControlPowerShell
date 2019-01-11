@@ -39,6 +39,9 @@ function Get-CWCLastContact {
         On Linux and Mac clients, it's found in the ClientLaunchParameters.txt file in the client installation folder:
           /opt/screenconnect-xxxxxxxxxxxxxxxx/ClientLaunchParameters.txt
 
+      .PARAMETER Credentials
+        [PSCredential] object used to authenticate against Control.
+
       .PARAMETER User
         User to authenticate against the Control server.
 
@@ -50,9 +53,12 @@ function Get-CWCLastContact {
 
       .PARAMETER Seconds
         Used with the Quiet switch. The number of seconds a machine needs to be offline before returning $False.
+    
+      .PARAMETER Group
+        Name of session group to use.
 
       .OUTPUTS
-          [datetime]
+          [datetime] -or [boolean]
 
       .NOTES
           Version:        1.1
@@ -73,28 +79,33 @@ function Get-CWCLastContact {
         [string]$Server,
         [Parameter(Mandatory=$True)]
         [guid]$GUID,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$User,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$Password,
         [switch]$Quiet,
         [int]$Seconds,
-        [string]$Group = "All Machines"
+        [string]$Group = "All Machines",
+        [Parameter(Mandatory=$True, ParameterSetName='cred')]
+        [PSCredential]$Credentials
     )
 
     # Time conversion
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     $epoch = $((New-TimeSpan -Start $(Get-Date -Date "01/01/1970") -End $(Get-Date)).TotalSeconds)
 
-    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
-    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+    if($Password) {
+        $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+        $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+    }
 
     $Body = ConvertTo-Json @($Group,$GUID)
     Write-Verbose $Body
 
     $URl = "$Server/Services/PageService.ashx/GetSessionDetails"
     try {
-        $SessionDetails = Invoke-RestMethod -Uri $url -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+        $SessionDetails = Invoke-RestMethod -Uri $url -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
     }
     catch {
         Write-Error "$($_.Exception.Message)"
@@ -157,6 +168,9 @@ function Invoke-CWCCommand {
         The GUID identifier for the machine you wish to connect to.
         You can retreive session info with the 'Get-CWCSessions' commandlet
 
+    .PARAMETER Credentials
+        [PSCredential] object used to authenticate against Control.
+
     .PARAMETER User
         User to authenticate against the Control server.
 
@@ -171,6 +185,9 @@ function Invoke-CWCCommand {
 
     .PARAMETER PowerShell
         Issues the command in a powershell session.
+
+    .PARAMETER Group
+        Name of session group to use.
 
     .OUTPUTS
         The output of the Command provided.
@@ -195,18 +212,23 @@ function Invoke-CWCCommand {
         [string]$Server,
         [Parameter(Mandatory=$True)]
         [guid]$GUID,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$User,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$Password,
         [string]$Command,
         [int]$TimeOut = 10000,
         [switch]$PowerShell,
-        [string]$Group = "All Machines"
+        [string]$Group = "All Machines",
+        [Parameter(Mandatory=$True, ParameterSetName='cred')]
+        [PSCredential]$Credentials
     )
 
-    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
-    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+    if($Password) {
+        $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+        $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+    }
 
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 
@@ -227,7 +249,7 @@ function Invoke-CWCCommand {
     
     # Issue command
     try {
-        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
     }
     catch {
         Write-Error "$(($_.ErrorDetails | ConvertFrom-Json).message)"
@@ -239,7 +261,7 @@ function Invoke-CWCCommand {
     $Body = ConvertTo-Json @($Group,$GUID)
     Write-Verbose $Body
     try {
-        $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+        $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
     }
     catch {
         Write-Error $($_.Exception.Message)
@@ -257,7 +279,7 @@ function Invoke-CWCCommand {
     $Body = ConvertTo-Json @($Group,$GUID)
     while ($Looking) {
         try {
-            $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+            $SessionDetails = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
         }
         catch {
             Write-Error $($_.Exception.Message)
@@ -298,6 +320,9 @@ function Get-CWCSessions {
     .PARAMETER Server
         The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
 
+    .PARAMETER Credentials
+        [PSCredential] object used to authenticate against Control.
+
     .PARAMETER User
         User to authenticate against the Control server.
 
@@ -334,20 +359,25 @@ function Get-CWCSessions {
     param (
         [Parameter(Mandatory=$True)]
         [string]$Server,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$User,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$Password,
         [Parameter(Mandatory=$True)]
         [ValidateSet('Support','Access')] 
         $Type,
         [string]$Group = "All Machines",
         [string]$Search,
-        [int]$Limit
+        [int]$Limit,
+        [Parameter(Mandatory=$True, ParameterSetName='cred')]
+        [PSCredential]$Credentials
     )
 
-    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
-    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+    if($Password) {
+        $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+        $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+    }
 
     $URI = "$Server/Services/PageService.ashx/GetHostSessionInfo"
 
@@ -361,7 +391,7 @@ function Get-CWCSessions {
     Write-Verbose $Body
 
     try {
-        $Data = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+        $Data = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
         return $Data.sessions
     }
     catch {
@@ -381,6 +411,9 @@ function Remove-CWCSession {
     .PARAMETER Server
         The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
     
+    .PARAMETER Credentials
+        [PSCredential] object used to authenticate against Control.
+
     .PARAMETER User
         User to authenticate against the Control server.
     
@@ -391,7 +424,7 @@ function Remove-CWCSession {
         The type of session Support/Access
     
     .PARAMETER GUID
-        The GUID identifier for the session you wish to end.
+        The GUID identifier for the session you wish to end. Accepts an array of GUIDs.
 
     .NOTES
         Version:        1.0
@@ -409,17 +442,22 @@ function Remove-CWCSession {
         [string]$Server,
         [Parameter(Mandatory=$True)]
         [guid[]]$GUID,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$User,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$Password,
         [Parameter(Mandatory=$True)]
         [ValidateSet('Support','Access')] 
-        $Type
+        $Type,
+        [Parameter(Mandatory=$True, ParameterSetName='cred')]
+        [PSCredential]$Credentials
     )
 
-    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
-    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+    if($Password) {
+        $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+        $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+    }
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
 
@@ -430,12 +468,17 @@ function Remove-CWCSession {
     }
 
     $SessionEventType = 21
-    $Body = ConvertTo-Json @($Group,$GUID,$SessionEventType,'')
+    if($GUID.count -eq 1){
+        $Body = ConvertTo-Json @($Group,@($GUID),$SessionEventType,'')
+    }
+    else {
+        $Body = ConvertTo-Json @($Group,$GUID,$SessionEventType,'')
+    }
     Write-Verbose $Body
 
     # Issue command
     try {
-        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
     }
     catch {
         Write-Error $(($_.ErrorDetails | ConvertFrom-Json).message)
@@ -463,6 +506,9 @@ function Update-CWCSessionName {
     On Linux and Mac clients, it's found in the ClientLaunchParameters.txt file in the client installation folder:
         /opt/screenconnect-xxxxxxxxxxxxxxxx/ClientLaunchParameters.txt
 
+    .PARAMETER Credentials
+    [PSCredential] object used to authenticate against Control.
+
     .PARAMETER User
     User to authenticate against the Control server.
 
@@ -488,24 +534,29 @@ function Update-CWCSessionName {
         [string]$Server,
         [Parameter(Mandatory=$True)]
         [guid]$GUID,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$User,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$Password,
         [Parameter(Mandatory=$True)]
         [string]$NewName,
-        [string]$Group = "All Machines"
+        [string]$Group = "All Machines",
+        [Parameter(Mandatory=$True, ParameterSetName='cred')]
+        [PSCredential]$Credentials
     )
 
-    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
-    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+    if($Password) {
+        $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+        $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+    }
 
     $Body = ConvertTo-Json @($Group,$GUID,$NewName)
     Write-Verbose $Body
 
     $URl = "$Server/Services/PageService.ashx/UpdateSessionName"
     try {
-        $null = Invoke-RestMethod -Uri $url -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+        $null = Invoke-RestMethod -Uri $url -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
     }
     catch {
         Write-Error $_.Exception.Message
@@ -524,6 +575,9 @@ function Invoke-CWCWake {
       .PARAMETER Server
           The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
       
+      .PARAMETER Credentials
+          [PSCredential] object used to authenticate against Control.
+
       .PARAMETER User
           User to authenticate against the Control server.
       
@@ -552,17 +606,22 @@ function Invoke-CWCWake {
         [string]$Server,
         [Parameter(Mandatory=$True)]
         [guid[]]$GUID,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$User,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
         [string]$Password,
         [Parameter(Mandatory=$True)]
         [ValidateSet('Support','Access')] 
-        $Type
+        [string]$Type,
+        [Parameter(Mandatory=$True, ParameterSetName='cred')]
+        [PSCredential]$Credentials
     )
 
-    $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
-    $mycreds = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+    if($Password) {
+        $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+        $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+    }
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
 
@@ -572,13 +631,19 @@ function Invoke-CWCWake {
         default     {Write-Error "Unknown Type, $Type";return}
     }
 
-    $SessionEventType = 42
-    $Body = ConvertTo-Json @($Group,$GUID,$SessionEventType,'')
+    $SessionEventType = 43
+    if($GUID.count -eq 1){
+        $Body = ConvertTo-Json @($Group,@($GUID),$SessionEventType,'')
+    }
+    else {
+        $Body = ConvertTo-Json @($Group,$GUID,$SessionEventType,'')
+    }
+    
     Write-Verbose $Body
     
     # Issue command
     try {
-        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $mycreds -ContentType "application/json" -Body $Body
+        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
     }
     catch {
         Write-Error $(($_.ErrorDetails | ConvertFrom-Json).message)
