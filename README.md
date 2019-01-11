@@ -17,11 +17,23 @@ $Credentials = Get-Credential
 # Load module into memory
 irm 'https://bit.ly/controlposh' | iex
 
+# Splat
+$CWCInfo = @{
+}
+
+# Splat
+$CWCInfo = @{
+    Server = $Server
+    Credentials = $Credentials
+}
+
 # Find this machine in Control
-$Computer = Get-CWCSessions -Server $Server -Credentials $Credentials -Type Access -Search $env:COMPUTERNAME -Limit 1
+$Computer = Get-CWCSessions @CWCInfo -Type Access -Search $env:COMPUTERNAME -Limit 1
+
+if(!$Computer) {return "Computer not found"}
 
 # Get the machines last contact
-Get-CWCLastContact -Server $Server -Credentials $Credentials -GUID $Computer.SessionID
+Get-CWCLastContact @CWCInfo -GUID $Computer.SessionID
 ```
          
          
