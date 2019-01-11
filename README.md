@@ -19,10 +19,6 @@ irm 'https://bit.ly/controlposh' | iex
 
 # Splat
 $CWCInfo = @{
-}
-
-# Splat
-$CWCInfo = @{
     Server = $Server
     Credentials = $Credentials
 }
