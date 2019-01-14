@@ -301,7 +301,11 @@ function Invoke-CWCCommand {
             $CheckDate = $origin.AddSeconds($CheckTime)
             if ($CheckDate -gt $ExecuteDate) {
                 $Looking = $False
-                return $Event.Data -split '[\r\n]' | Where-Object {$_} | Select-Object -skip 1
+                $Output = $Event.Data -split '[\r\n]' | Where-Object {$_}
+                if(!$PowerShell){
+                    $Output = $Output | Select-Object -skip 1
+                }
+                return $Output 
             }
         }
 
