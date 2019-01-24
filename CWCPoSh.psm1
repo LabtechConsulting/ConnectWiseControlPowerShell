@@ -247,7 +247,7 @@ function Invoke-CWCCommand {
     $FormattedCommand = $FormattedCommand | Out-String
 
     $SessionEventType = 44
-    $Body = ConvertTo-Json @($Group,@($GUID),$SessionEventType,$FormattedCommand)
+    $Body = (ConvertTo-Json @($Group,@($GUID),$SessionEventType,$FormattedCommand)).Replace('\r\n','\n')
     Write-Verbose $Body
     
     # Issue command
@@ -301,10 +301,8 @@ function Invoke-CWCCommand {
             $CheckDate = $origin.AddSeconds($CheckTime)
             if ($CheckDate -gt $ExecuteDate) {
                 $Looking = $False
-                $Output = $Event.Data -split '[\r\n]' | Where-Object {$_}
-                if(!$PowerShell){
-                    $Output = $Output | Select-Object -skip 1
-                }
+                $Output = $Event.Data -split '[\r\n]' | Where-Object {$_ -and $_ -ne "C:\WINDOWS\system32>$Command"}
+                Write-Verbose $Output.replace($Command,'')
                 return $Output 
             }
         }
@@ -658,5 +656,81 @@ function Invoke-CWCWake {
         return
     }
 }
-    
+
+function Get-CWCSessionDetail {
+    <#
+    .SYNOPSIS
+        Will return information about a session.
+
+    .DESCRIPTION
+        Dispays more information about a session.
+
+    .PARAMETER Server
+        The address to your Control server. Example 'https://control.labtechconsulting.com' or 'http://control.secure.me:8040'
+
+    .PARAMETER Credentials
+        [PSCredential] object used to authenticate against Control.
+
+    .PARAMETER User
+        User to authenticate against the Control server.
+
+    .PARAMETER Password
+        Password to authenticate against the Control server.
+
+    .PARAMETER Group
+        Name of session group to use.
+
+    .PARAMETER GUID
+        GUID of the machine to retreive session details.
+
+    .OUTPUTS
+        ConnectWise Control session objects
+
+    .NOTES
+        Version:        1.0
+        Author:         Chris Taylor
+        Creation Date:  1/15/2019
+        Purpose/Change: Initial script development
+
+    .EXAMPLE
+        Get-CWCAccessSessions -Server $Server -User $User -Password $Password -Search "server1" -Limit 10
+        Will return the first 10 access sessions that match 'server1'.
+
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$True)]
+        [string]$Server,
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
+        [string]$User,
+        [Parameter(Mandatory=$True, ParameterSetName='password')]
+        [string]$Password,
+        [string]$Group = "All Machines",
+        [Parameter(Mandatory=$True, ParameterSetName='cred')]
+        [PSCredential]$Credentials,
+        [Parameter(Mandatory=$True)]
+        [guid]$GUID
+    )
+
+    if($Password) {
+        $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
+        $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
+        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+    }
+
+    $URI = "$Server/Services/PageService.ashx/GetSessionDetails"
+
+    $Body = ConvertTo-Json @($Group,$GUID)
+    Write-Verbose $Body
+
+    try {
+        $Data = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json; charset=utf-8" -Body $Body -Verbose
+        return $Data
+    }
+    catch {
+        Write-Error $(($_.ErrorDetails | ConvertFrom-Json).message)
+        return
+    }
+}
+
 #endregion Functions
