@@ -302,7 +302,7 @@ function Invoke-CWCCommand {
             if ($CheckDate -gt $ExecuteDate) {
                 $Looking = $False
                 $Output = $Event.Data -split '[\r\n]' | Where-Object {$_ -and $_ -ne "C:\WINDOWS\system32>$Command"}
-                Write-Verbose $Output.replace($Command,'')
+                Write-Verbose $Event.Data
                 return $Output 
             }
         }
