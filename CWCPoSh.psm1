@@ -236,6 +236,12 @@ function Invoke-CWCCommand {
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
+    
+    #Create authorization header
+    $key = "$($Credentials.UserName):$($Credentials.GetNetworkCredential().password)"
+    $headers = @{
+        "Authorization" = "Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($key)))"
+    }
 
     # Format command
     $FormattedCommand = @()
@@ -252,7 +258,7 @@ function Invoke-CWCCommand {
     
     # Issue command
     try {
-        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
+        $null = Invoke-RestMethod -Uri $URI -Method Post -Headers $headers -Credential $Credentials -ContentType "application/json" -Body $Body
     }
     catch {
         Write-Error "$(($_.ErrorDetails | ConvertFrom-Json).message)"
