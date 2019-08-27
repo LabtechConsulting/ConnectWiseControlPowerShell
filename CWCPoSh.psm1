@@ -100,7 +100,7 @@ function Get-CWCLastContact {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $Body = ConvertTo-Json @($Group,$GUID)
