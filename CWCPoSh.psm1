@@ -230,7 +230,7 @@ function Invoke-CWCCommand {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
@@ -388,7 +388,7 @@ function Get-CWCSessions {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $URI = "$Server/Services/PageService.ashx/GetHostSessionInfo"
@@ -468,7 +468,7 @@ function Remove-CWCSession {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
@@ -560,7 +560,7 @@ function Update-CWCSessionName {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $Body = ConvertTo-Json @($Group,$GUID,$NewName)
@@ -632,7 +632,7 @@ function Invoke-CWCWake {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
@@ -721,7 +721,7 @@ function Get-CWCSessionDetail {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $URI = "$Server/Services/PageService.ashx/GetSessionDetails"
