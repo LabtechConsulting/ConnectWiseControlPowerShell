@@ -730,7 +730,7 @@ function Get-CWCSessionDetail {
     Write-Verbose $Body
 
     try {
-        $Data = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json; charset=utf-8" -Body $Body -Verbose
+        $Data = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json; charset=utf-8" -Body $Body
         return $Data
     }
     catch {
