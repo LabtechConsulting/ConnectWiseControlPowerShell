@@ -100,7 +100,7 @@ function Get-CWCLastContact {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $Body = ConvertTo-Json @($Group,$GUID)
@@ -230,12 +230,18 @@ function Invoke-CWCCommand {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
+    
+    #Create authorization header
+    $key = "$($Credentials.UserName):$($Credentials.GetNetworkCredential().password)"
+    $headers = @{
+        "Authorization" = "Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($key)))"
+    }
 
     # Format command
     $FormattedCommand = @()
@@ -252,7 +258,7 @@ function Invoke-CWCCommand {
     
     # Issue command
     try {
-        $null = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json" -Body $Body
+        $null = Invoke-RestMethod -Uri $URI -Method Post -Headers $headers -Credential $Credentials -ContentType "application/json" -Body $Body
     }
     catch {
         Write-Error "$(($_.ErrorDetails | ConvertFrom-Json).message)"
@@ -382,7 +388,7 @@ function Get-CWCSessions {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $URI = "$Server/Services/PageService.ashx/GetHostSessionInfo"
@@ -462,7 +468,7 @@ function Remove-CWCSession {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
@@ -554,7 +560,7 @@ function Update-CWCSessionName {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $Body = ConvertTo-Json @($Group,$GUID,$NewName)
@@ -626,7 +632,7 @@ function Invoke-CWCWake {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $URI = "$Server/Services/PageService.ashx/AddEventToSessions"
@@ -715,7 +721,7 @@ function Get-CWCSessionDetail {
     if($Password) {
         $secpasswd = ConvertTo-SecureString $Password -AsPlainText -Force
         $Credentials = New-Object System.Management.Automation.PSCredential ($User, $secpasswd)
-        Write-Warning "Switch to -Credentials [PSCredential] authentication method."
+        #Write-Warning "Switch to -Credentials [PSCredential] authentication method."
     }
 
     $URI = "$Server/Services/PageService.ashx/GetSessionDetails"
@@ -724,7 +730,7 @@ function Get-CWCSessionDetail {
     Write-Verbose $Body
 
     try {
-        $Data = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json; charset=utf-8" -Body $Body -Verbose
+        $Data = Invoke-RestMethod -Uri $URI -Method Post -Credential $Credentials -ContentType "application/json; charset=utf-8" -Body $Body
         return $Data
     }
     catch {
